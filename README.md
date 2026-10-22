@@ -68,6 +68,8 @@ sfdx-project-template/
 │   └── main/default/          # Add your Salesforce metadata here
 ├── config/
 │   └── project-scratch-def.json
+├── data/
+│   └── knowledge/articles.json # Export of 10 published Knowledge articles
 ├── docs/
 │   └── plans/                 # Implementation plans
 ├── scripts/
@@ -88,6 +90,8 @@ sfdx-project-template/
 ```
 
 ## Commands
+
+Knowledge metadata is stored under `force-app/main/default/` in `objects/Knowledge__kav/`, `layouts/`, `profiles/`, and `settings/`. The article content and source record IDs are saved in `data/knowledge/articles.json`. This JSON is a data snapshot, not a metadata component or an automatic import file; deploying metadata does not recreate or publish the articles.
 
 ### Daily development
 
