@@ -4,9 +4,9 @@
 
 Every agent, before starting any task, **must**:
 
-1. Read `.github/copilot-instructions.md` in full — this is the primary source of project rules, tone, and conventions.
+1. Read `.agents/instructions/project-rules.md` in full — this is the primary source of project rules, tone, and conventions.
 2. Read this file (`AGENTS.md`) in full.
-3. Load any `.github/instructions/*.instructions.md` files that match the file types you will be editing:
+3. Load any `.agents/instructions/*.instructions.md` files that match the file types you will be editing:
 
 | Instruction file                     | When to load                                                        |
 | ------------------------------------ | ------------------------------------------------------------------- |
@@ -16,9 +16,17 @@ Every agent, before starting any task, **must**:
 | `node-scripts.instructions.md`       | Editing `scripts/**/*.js` or `*.config.js`                          |
 | `salesforce-cli.instructions.md`     | Editing `sfdx-project.json`, `config/**`, `manifest/**`             |
 | `agents-maintenance.instructions.md` | Editing `.github/workflows/**`, `package.json`, CI/tooling config   |
-| `readme-maintenance.instructions.md` | Editing `README.md`, `.github/agents/**`, `.github/instructions/**` |
+| `readme-maintenance.instructions.md` | Editing `README.md`, `.codex/agents/**`, `.agents/skills/**`, `.agents/instructions/**` |
 
-> For a plain-language overview of how agents, instructions, skills, and prompts relate to each other (and why custom instructions are NOT automatically inherited by delegated sub-agents), see [`docs/copilot-customization-guide.md`](docs/copilot-customization-guide.md).
+## Codex configuration
+
+- Project agents live in `.codex/agents/*.toml`; each defines `name`, `description`, and `developer_instructions`. These are delegated roles, not automatic replacements for the main chat agent.
+- Reusable workflows live in `.agents/skills/<name>/SKILL.md`. Invoke them with `$skill-name` or allow description-based selection.
+- A curated subset of the Salesforce skills library is vendored into `.agents/skills/` alongside project workflows. `.agents/skills/salesforce-library.json` records its source revision and installed skill names; preserve upstream names and the accompanying `SALESFORCE-LICENSE.txt`. Retain core Salesforce development, Agentforce, and local/CLI Digital Experience skills. Exclude skills whose primary workflow requires unavailable Salesforce MCP services; optional MCP enhancements do not require new connections. Add other product areas only when needed. Review upstream updates explicitly and preserve project rules when using these skills. Salesforce skills do not install or authorize their required external tools.
+- Shared rules live in `.agents/instructions/project-rules.md` and `.agents/instructions/`; the bootstrap table above explicitly loads them for Codex. Load matching instruction files explicitly using the bootstrap table.
+- Read `readme-maintenance.instructions.md` when changing agent, skill, instruction, or customization documentation files.
+- Custom agents inherit the parent session's runtime permissions and connected tools. Never assume an instruction installs a tool or grants authorization.
+- See `docs/codex-customization-guide.md` for formats, migration decisions, and remaining recommendations.
 
 ---
 
@@ -86,8 +94,8 @@ Every agent, before starting any task, **must**:
 ## Project-Specific Conventions
 
 - **Language**: all code comments and all documentation (README, AGENTS.md, `docs/**`, ApexDoc/JSDoc, inline comments) must be written in English only, regardless of the chat language.
-- **Apex comments**: only ApexDoc comments on public/global classes, methods, and variables are allowed. No other inline/block comments unless strictly necessary to clarify non-obvious logic. See `.github/instructions/apex-patterns.instructions.md`. This rule is not automatically inherited by sub-agents — duplicated in `gem-implementer.agent.md` and `gem-apex-specialist.agent.md`.
-- **Link verification**: never state/output a URL unless it was just confirmed live via an actual tool call/fetch in the current turn — never cite a URL reconstructed from memory. For JS-heavy/SPA doc sites (Salesforce Help/Developer docs, Trailhead, Lightning Design System), go straight to a browser tool (Playwright). Verification budget is max 2 attempts per link — if still unverifiable or Playwright is unavailable, stop and tell the user. Full rule: see "Link Verification (CRITICAL)" in `.github/copilot-instructions.md`.
+- **Apex comments**: only ApexDoc comments on public/global classes, methods, and variables are allowed. No other inline/block comments unless strictly necessary to clarify non-obvious logic. See `.agents/instructions/apex-patterns.instructions.md`. This rule is not automatically inherited by sub-agents — duplicated in `gem-implementer.toml` and `gem-apex-specialist.toml`.
+- **Link verification**: never state/output a URL unless it was just confirmed live via an actual tool call/fetch in the current turn — never cite a URL reconstructed from memory. For JS-heavy/SPA doc sites (Salesforce Help/Developer docs, Trailhead, Lightning Design System), go straight to a browser tool (Playwright). Verification budget is max 2 attempts per link — if still unverifiable or Playwright is unavailable, stop and tell the user. Full rule: see "Link Verification (CRITICAL)" in `.agents/instructions/project-rules.md`.
 - Always use `sf` (SF CLI v2), not `sfdx` (deprecated).
 - Use **ESLint flat config** (`eslint.config.js`), not legacy `.eslintrc*`.
 - **Code formatting** uses `.prettierrc` with `tabWidth: 4` (4-space indent) for all supported file types (JS, CSS, HTML, JSON, Apex, XML, YAML, Markdown). `.prettierignore` excludes `.idea/`, `IlluminatedCloud/`, `.npm-cache/`, `node_modules/`, `.github/`, `.husky/`, and all `*.md` files (Markdown is not auto-formatted by `npm run prettier`).
@@ -97,7 +105,7 @@ Every agent, before starting any task, **must**:
 - `.forceignore` excludes test folders like `**/__tests__/**` from source push/pull flows; keep deploy intent in mind when adding test assets.
 - GitHub Actions metadata validation expects repository secret `SF_AUTH_URL`; optional repository variable `SFDX_METADATA_DIR` changes the metadata root without code changes.
 - Manual deploy workflow (`.github/workflows/deploy.yml`) targets a single `QA_ORG` GitHub Environment today (extensible by adding more `environment.options` entries in the workflow and matching GitHub Environments) with a `dry_run` flag. Both the `validate` and `deploy` jobs run inside the selected GitHub Environment and authenticate using its **environment-scoped secret** `SF_AUTH_URL` — there are no repository-level `SF_AUTH_URL_STAGING` / `SF_AUTH_URL_PRODUCTION` secrets.
-- **Node.js scripts** (`scripts/**/*.js`): always CJS, `'use strict'` required, `node:` prefix for all built-in requires, `parseArgs` from `node:util` for CLI argument parsing (Node 18.11+), `spawnSync` with `shell: false` + `stdio: 'inherit'` for CLI wrappers, `fatal()` helper at bottom of file. See `.github/instructions/node-scripts.instructions.md`.
+- **Node.js scripts** (`scripts/**/*.js`): always CJS, `'use strict'` required, `node:` prefix for all built-in requires, `parseArgs` from `node:util` for CLI argument parsing (Node 18.11+), `spawnSync` with `shell: false` + `stdio: 'inherit'` for CLI wrappers, `fatal()` helper at bottom of file. See `.agents/instructions/node-scripts.instructions.md`.
 - **ESLint coverage**: `scripts/**/*.js` and `*.config.js` (root) are covered by a `globals.node` + `eslintJs/recommended` block in `eslint.config.js`; `scripts/**/*.js` is also in the `lint-staged` pre-commit gate.
 - **Node.js MCP server**: no MCP server added — `bash` tool + Context7 + GitHub MCP already covers all npm/Node.js development needs (no official Node.js Foundation MCP exists as of mid-2025).
 

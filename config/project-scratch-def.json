@@ -1,8 +1,27 @@
 {
     "orgName": "sfdx-project-template",
     "edition": "Developer",
-    "features": ["EnableSetPasswordInApi"],
+    "features": [
+        "EnableSetPasswordInApi",
+        "Einstein1AIPlatform",
+        "Knowledge",
+        "Communities"
+    ],
     "settings": {
+        "einsteinGptSettings": {
+            "enableEinsteinGptPlatform": true
+        },
+        "agentPlatformSettings": {
+            "enableAgentPlatform": true
+        },
+        "knowledgeSettings": {
+            "enableKnowledge": true,
+            "enableLightningKnowledge": true,
+            "defaultLanguage": "en"
+        },
+        "communitiesSettings": {
+            "enableNetworksEnabled": true
+        },
         "lightningExperienceSettings": {
             "enableS1DesktopEnabled": true
         },

@@ -1,203 +1,33 @@
-# Recommended MCP Servers
+# MCP Setup
 
-This guide lists MCP servers that enhance Copilot when working on this Salesforce DX project, and shows how to configure them for **VS Code** and **JetBrains**.
+Project-local MCP configuration lives in `.codex/config.toml`. Skills and agent definitions do not install MCP servers or grant credentials. Check the host's connected tools before relying on an integration.
 
-> **Why global, not workspace-level?**
-> VS Code runs both global and workspace MCP configs simultaneously with no override mechanism, which results in duplicate tools for anyone who already has servers configured globally. Managing servers globally avoids this.
+## Salesforce skills
 
----
+Salesforce workflows are installed project-locally in `.agents/skills/` from `forcedotcom/sf-skills`. This replaces the Salesforce DX local MCP integration, whose announced end of life is November 2, 2026. Do not add the retired MCP package when setting up this project.
 
-## Recommended servers
-
-| Server            | Why it helps                                                      |
-| ----------------- | ----------------------------------------------------------------- |
-| **Salesforce DX** | Deploy/retrieve metadata, run Apex tests, query data from the org |
-| **GitHub MCP**    | Manage issues, PRs, and Actions without leaving chat              |
-| **Context7**      | Up-to-date Apex, LWC, SLDS, and SF CLI docs on demand             |
-| **Tavily**        | Search Salesforce Known Issues, Stack Exchange, release notes     |
-| **filesystem**    | Read/write project files directly from chat                       |
-| **fetch**         | Pull any URL (WSDL, API specs, docs pages) into context           |
-| **memory**        | Persist architectural decisions across sessions                   |
-| **Playwright**    | Browser automation for LWC E2E testing                            |
+The installed snapshot contains 49 curated Salesforce skills. Its exact upstream revision and inventory are recorded in `.agents/skills/salesforce-library.json`; its license is preserved in `.agents/skills/SALESFORCE-LICENSE.txt`. Refresh skill discovery if the host does not detect the new skills automatically. Org operations still require Salesforce CLI authentication and each skill's prerequisites. Review upstream updates explicitly and preserve existing project workflows.
 
 ---
 
-## IDE-specific setup
+### Curated Salesforce coverage
 
-### VS Code
+- Core development: Apex and tests, SOQL, data operations, metadata deployment/retrieval, custom objects, permissions, sharing, validation, value sets, integrations, org management, and Code Analyzer.
+- Agentforce: generation, testing, observation, and architecture analysis.
+- Local/CLI Digital Experience development: branding files, LWC development and migration, SLDS, accessibility, security, RTL, runtime observation, and LDS/GraphQL.
 
-Official docs: [Add and manage MCP servers in VS Code](https://code.visualstudio.com/docs/copilot/customization/mcp-servers)
+Skills whose primary workflow requires unavailable Salesforce MCP services have been removed: Flow generation, custom-field generation, portal provisioning, LWR site generation/configuration, CMS brand retrieval/application, CMS content authoring/rendering/type generation, and CMS search. This selection does not require installing Metadata Experts, Metadata Grounding, Headless 360, CMS read/write services, or a skill bridge. No Salesforce MCP connection was added during the connection investigation.
 
-Edit your **user-level** config (available across all workspaces):
+A retained skill may mention an optional MCP enhancement or an unavailable related skill. Use its documented local/CLI fallback where available; do not treat these references as instructions to install a server or restore excluded skills. For example, value-set grounding is optional, and the Apex skill allows reporting the unavailable analyzer integration; CLI code analysis remains available through the Code Analyzer skills.
 
-1. Open the Command Palette (`Cmd+Shift+P`)
-2. Run **MCP: Open User Configuration**
-3. Paste the [complete example](#complete-examples) below
-
-For workspace-level sharing, create `.vscode/mcp.json` in the project root and commit it. Use `inputs` to avoid hardcoding secrets — VS Code will prompt once and store them in the system keychain.
+The selection also excludes industry-specific products and DevOps Center. Review upstream updates explicitly and preserve the selection policy instead of reinstalling the full library.
 
 ---
 
-### JetBrains
+## Codex connections
 
-Official docs: [Extending Copilot Chat with MCP — JetBrains section](https://docs.github.com/en/copilot/how-tos/provide-context/use-mcp-in-your-ide/extend-copilot-chat-with-mcp?tool=jetbrains)
+Context7 is configured in the project's Codex configuration. Keep API credentials in environment variables or the host credential store, rather than repository files. Additional services should be connected only when a task requires them.
 
-Config file path: `~/.config/github-copilot/intellij/mcp.json`
+Use the Codex host's MCP settings to manage connections. The CLI also provides `codex mcp list`, `codex mcp add --help`, and `codex mcp remove <name>` for user-level connection management. Host support for project configuration and live discovery varies; refresh discovery or start a new session after configuration changes.
 
-Uses the same `{ "servers": { ... } }` format as VS Code (no `inputs` support — use environment variables for secrets).
-
----
-
-## Complete examples
-
-### VS Code — `~/.config/Code/User/mcp.json` (macOS: `~/Library/Application Support/Code/User/mcp.json`)
-
-```json
-{
-    "inputs": [
-        {
-            "id": "github-token",
-            "type": "promptString",
-            "description": "GitHub Personal Access Token",
-            "password": true
-        },
-        {
-            "id": "tavily-api-key",
-            "type": "promptString",
-            "description": "Tavily API Key",
-            "password": true
-        },
-        {
-            "id": "context7-api-key",
-            "type": "promptString",
-            "description": "Context7 API Key",
-            "password": true
-        }
-    ],
-    "servers": {
-        "Salesforce DX": {
-            "command": "npx",
-            "args": [
-                "-y",
-                "@salesforce/mcp",
-                "--orgs",
-                "DEFAULT_TARGET_ORG",
-                "--toolsets",
-                "orgs,metadata,data,users",
-                "--tools",
-                "run_apex_test",
-                "--allow-non-ga-tools"
-            ]
-        },
-        "fetch": {
-            "command": "uvx",
-            "args": ["mcp-server-fetch"]
-        },
-        "filesystem": {
-            "command": "npx",
-            "args": ["-y", "@modelcontextprotocol/server-filesystem", "/path/to/your/projects"]
-        },
-        "memory": {
-            "command": "npx",
-            "args": ["-y", "@modelcontextprotocol/server-memory"]
-        },
-        "io.github.upstash/context7": {
-            "type": "stdio",
-            "command": "npx",
-            "args": ["-y", "@upstash/context7-mcp@latest"],
-            "env": {
-                "CONTEXT7_API_KEY": "${input:context7-api-key}"
-            }
-        },
-        "microsoft/playwright-mcp": {
-            "type": "stdio",
-            "command": "npx",
-            "args": ["-y", "@playwright/mcp@latest"]
-        },
-        "io.github.github/github-mcp-server": {
-            "type": "http",
-            "url": "https://api.githubcopilot.com/mcp/",
-            "requestInit": {
-                "headers": {
-                    "Authorization": "Bearer ${input:github-token}"
-                }
-            }
-        },
-        "io.github.tavily-ai/tavily-mcp": {
-            "type": "stdio",
-            "command": "npx",
-            "args": ["-y", "tavily-mcp@latest"],
-            "env": {
-                "TAVILY_API_KEY": "${input:tavily-api-key}"
-            }
-        }
-    }
-}
-```
-
----
-
-### JetBrains — `~/.config/github-copilot/intellij/mcp.json`
-
-```json
-{
-    "servers": {
-        "Salesforce DX": {
-            "command": "npx",
-            "args": [
-                "-y",
-                "@salesforce/mcp",
-                "--orgs",
-                "DEFAULT_TARGET_ORG",
-                "--toolsets",
-                "orgs,metadata,data,users",
-                "--tools",
-                "run_apex_test",
-                "--allow-non-ga-tools"
-            ]
-        },
-        "fetch": {
-            "command": "uvx",
-            "args": ["mcp-server-fetch"]
-        },
-        "filesystem": {
-            "command": "npx",
-            "args": ["-y", "@modelcontextprotocol/server-filesystem", "/path/to/your/projects"]
-        },
-        "memory": {
-            "command": "npx",
-            "args": ["-y", "@modelcontextprotocol/server-memory"]
-        },
-        "io.github.upstash/context7": {
-            "type": "stdio",
-            "command": "npx",
-            "args": ["-y", "@upstash/context7-mcp@latest"],
-            "env": {
-                "CONTEXT7_API_KEY": "YOUR_CONTEXT7_API_KEY"
-            }
-        },
-        "microsoft/playwright-mcp": {
-            "type": "stdio",
-            "command": "npx",
-            "args": ["-y", "@playwright/mcp@latest"]
-        },
-        "io.github.github/github-mcp-server": {
-            "type": "http",
-            "url": "https://api.githubcopilot.com/mcp/",
-            "requestInit": {
-                "headers": {
-                    "Authorization": "Bearer YOUR_GITHUB_PAT"
-                }
-            }
-        },
-        "io.github.tavily-ai/tavily-mcp": {
-            "type": "stdio",
-            "command": "npx",
-            "args": ["-y", "tavily-mcp@latest"],
-            "env": {
-                "TAVILY_API_KEY": "YOUR_TAVILY_API_KEY"
-            }
-        }
-    }
-}
-```
+The project uses local shell tools for files, Salesforce CLI for org operations, and the installed skills for workflows. No Salesforce MCP service is required by the curated setup.

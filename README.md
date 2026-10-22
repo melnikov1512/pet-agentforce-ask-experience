@@ -5,9 +5,9 @@
 ![Salesforce API](https://img.shields.io/badge/Salesforce_API-v66.0-00A1E0)
 ![Node.js](https://img.shields.io/badge/Node.js-18.11%2B-339933)
 
-_Production-ready Salesforce DX starter with quality tooling, CI/CD, and GitHub Copilot AI built in_
+_Production-ready Salesforce DX starter with quality tooling, CI/CD, and Codex configuration built in_
 
-[Getting Started](#getting-started) • [Commands](#commands) • [CI/CD](#cicd-pipelines) • [Copilot Integration](#github-copilot-integration) • [Commit Policy](#commit-policy) • [Troubleshooting](#troubleshooting)
+[Getting Started](#getting-started) • [Commands](#commands) • [CI/CD](#cicd-pipelines) • [Codex Configuration](#codex-configuration) • [Commit Policy](#commit-policy) • [Troubleshooting](#troubleshooting)
 
 </div>
 
@@ -21,7 +21,7 @@ Clone this template, add your metadata to `force-app/`, configure the `SF_AUTH_U
 - **Apex SAST** — `sf code-analyzer` (SARIF output) on every PR; blocks on `error`-level findings
 - **Pre-commit hooks** — Husky + lint-staged: format → lint → related LWC tests, automatically
 - **CI pipelines** — PR checks, metadata validate-only gate, security scanning, AI PR summaries, and guarded manual deploys
-- **GitHub Copilot** — 18 custom agents, 7 instruction files, 21 skills, and prompt files pre-wired under `.github/`
+- **Codex** — 18 specialist agents, shared project instructions, 20 project workflows, and 49 curated Salesforce skills
 
 ## Prerequisites
 
@@ -72,11 +72,13 @@ sfdx-project-template/
 │   └── plans/                 # Implementation plans
 ├── scripts/
 │   └── deploy.js              # Local deploy helper (mirrors deploy.yml)
+├── .agents/
+│   ├── instructions/          # Shared rules and seven task-specific rule files
+│   └── skills/                # 20 project workflows and 49 Salesforce skills
+├── .codex/
+│   ├── agents/                # 18 specialist agents
+│   └── config.toml            # Project MCP configuration
 ├── .github/
-│   ├── agents/                # 18 Copilot custom agents
-│   ├── instructions/          # Auto-applied Copilot instruction files
-│   ├── prompts/               # Reusable Copilot prompt files
-│   ├── skills/                # 21 on-demand Copilot skills
 │   └── workflows/             # CI/CD pipeline definitions
 ├── sfdx-project.json          # API v66.0, package dir: force-app
 ├── .prettierrc                # Prettier config: 4-space indent, Apex + XML plugins
@@ -169,31 +171,16 @@ Deployments to QA and higher envs are triggered manually via **Actions → Deplo
 - Higher environments require Required Reviewers and enforce a `main`-only branch policy.
 - For rollback steps, see `RUNBOOK.md` §17.
 
-## GitHub Copilot integration
+## Codex configuration
 
-The `.github/` directory ships a complete Copilot workspace setup:
+- `AGENTS.md` is the repository instruction entry point. It loads shared rules from `.agents/instructions/project-rules.md` and relevant `.agents/instructions/` files.
+- `.codex/agents/` contains 18 specialist agents in TOML format, including Apex, LWC, data architecture, implementation, review, and orchestration roles.
+- `.agents/skills/` contains 20 project workflows and 49 curated upstream Salesforce skills, including the converted `create-exception-handler` prompt. Invoke a workflow with `$skill-name`.
+- Agent definitions inherit the parent model, runtime permissions, and connected tools.
+- Start a new Codex session after migration if the host does not refresh discovery. Custom-agent support depends on the host integration.
+- The Salesforce skills library (`forcedotcom/sf-skills`) is installed locally in `.agents/skills/`. Its upstream revision and inventory are recorded in `.agents/skills/salesforce-library.json`; the upstream license is in `.agents/skills/SALESFORCE-LICENSE.txt`. Updates are explicit, reviewable changes. Skills that operate on an org require local Salesforce CLI authentication and any prerequisites specified by the skill. The retired Salesforce DX MCP integration is no longer required.
 
-**Instruction files** — auto-applied context scoped by file pattern:
-
-| File                             | Applies to                             |
-| -------------------------------- | -------------------------------------- |
-| `apex-patterns.instructions.md`      | Apex classes and triggers                                    |
-| `lwc-patterns.instructions.md`       | LWC JS, HTML, and CSS                                        |
-| `unit-tests.instructions.md`         | Apex test classes                                            |
-| `salesforce-cli.instructions.md`     | `sfdx-project.json`, config, manifests                       |
-| `node-scripts.instructions.md`       | `scripts/**/*.js`, `*.config.js`                             |
-| `agents-maintenance.instructions.md` | CI workflows, `package.json`, `sfdx-project.json`, `RUNBOOK.md` |
-| `readme-maintenance.instructions.md` | `README.md`, `.github/agents\|instructions\|skills\|prompts/**` |
-
-**Custom agents** — 18 specialized sub-agents including `gem-apex-specialist`, `gem-lwc-specialist`, `gem-sf-data-architect`, `gem-orchestrator`, `gem-implementer`, `gem-reviewer`, `gem-debugger`, and more.
-
-**Skills** — 21 on-demand workflows: `create-implementation-plan`, `refactor-plan`, `architecture-blueprint-generator`, `github-issues`, `grill-me-code`, `grill-me-docs`, Tavily search/research/crawl, and more.
-
-**Prompt files** — reusable prompts for common Salesforce tasks (e.g., `create-exception-handler`).
-
-**Using these mechanisms** — see [`docs/copilot-customization-guide.md`](docs/copilot-customization-guide.md) for a guide on when to use agents vs. instructions vs. skills vs. prompts, including an important note on why custom instructions are not automatically inherited by delegated sub-agents.
-
-**MCP servers** — see [`docs/mcp-setup.md`](docs/mcp-setup.md) for the recommended set of MCP servers (Salesforce DX, GitHub, Context7, Tavily, and more) and how to configure them globally in your IDE.
+See [Codex customization](docs/codex-customization-guide.md) for file formats and recommendations, and [MCP setup](docs/mcp-setup.md) for the repository's integration guidance. Skill discovery does not install MCP servers or external CLIs.
 
 ## Commit policy
 
@@ -238,7 +225,7 @@ This project follows the [Conventional Commits](https://www.conventionalcommits.
 | `aura`     | `force-app/**/aura/**`                                |
 | `metadata` | Other Salesforce metadata under `force-app/`          |
 | `ci`       | `.github/workflows/**`                                |
-| `copilot`  | `.github/agents/**`, `instructions/**`, `skills/**`   |
+| `agents`   | `.codex/agents/**`, `.agents/skills/**`, `AGENTS.md`, `.agents/instructions/**` |
 | `config`   | `sfdx-project.json`, `config/**`, `eslint.config.js`  |
 | `scripts`  | `scripts/**`                                          |
 | `docs`     | `docs/**`, `RUNBOOK.md`, `README.md`                  |
