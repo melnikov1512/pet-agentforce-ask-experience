@@ -1,0 +1,7 @@
+.idea/
+IlluminatedCloud/
+.npm-cache/
+node_modules/
+.github/
+.husky/
+*.md
