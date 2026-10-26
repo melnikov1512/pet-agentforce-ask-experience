@@ -69,7 +69,7 @@ sfdx-project-template/
 ├── config/
 │   └── project-scratch-def.json
 ├── data/
-│   └── knowledge/articles.json # Export of 10 published Knowledge articles
+│   └── knowledge/all-articles.json # Reusable creation data for 100 Knowledge articles
 ├── docs/
 │   └── plans/                 # Implementation plans
 ├── scripts/
@@ -91,7 +91,7 @@ sfdx-project-template/
 
 ## Commands
 
-Knowledge metadata is stored under `force-app/main/default/` in `objects/Knowledge__kav/`, `layouts/`, `profiles/`, and `settings/`. The article content and source record IDs are saved in `data/knowledge/articles.json`. This JSON is a data snapshot, not a metadata component or an automatic import file; deploying metadata does not recreate or publish the articles.
+Knowledge metadata is stored under `force-app/main/default/` in `objects/Knowledge__kav/`, `layouts/`, `profiles/`, and `settings/`. The reusable content for all 100 articles is saved in `data/knowledge/all-articles.json`, without source-org record IDs. See [the Knowledge data guide](data/knowledge/index.md) for destination-org prerequisites and import considerations. The JSON must be adapted to the chosen import tool; metadata deployment does not create or publish article records.
 
 ### Daily development
 

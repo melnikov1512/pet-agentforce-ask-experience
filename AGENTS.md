@@ -38,7 +38,7 @@ Every agent, before starting any task, **must**:
 ## Architecture Snapshot
 
 - Single package directory: `force-app` (`sfdx-project.json`).
-- Knowledge configuration is stored under `force-app/main/default/objects/Knowledge__kav/`, `layouts/`, `profiles/`, and `settings/`. The 10 basic Salesforce setup articles are exported as record data in `data/knowledge/articles.json`; metadata deployment does not import or publish those records.
+- Knowledge configuration is stored under `force-app/main/default/objects/Knowledge__kav/`, `layouts/`, `profiles/`, and `settings/`. The 100 basic Salesforce setup articles are stored as reusable creation data in `data/knowledge/all-articles.json`, without source-org record IDs. Import guidance is in `data/knowledge/index.md`; metadata deployment does not import or publish article records.
 - Expected Salesforce metadata root: `force-app/main/default/` (not present in this snapshot yet; add when committing first metadata).
 - Local quality toolchain lives in Node config files at repo root:
     - `eslint.config.js` for Aura/LWC linting profiles
